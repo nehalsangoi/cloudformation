@@ -1,0 +1,36 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "Generate RT for AWS EC2 Retirement Notification Event."
+Resources:
+  EC2RetireSNSTopic:
+    Type: "AWS::SNS::Topic"
+    Properties:
+      DisplayName: "EC2-Retire"
+      Subscription:
+        - Endpoint: "incident@servicenow.com"
+          Protocol: email
+      TopicName: "EC2-Retirement"
+  EC2RetireEventRule:
+    Type: "AWS::Events::Rule"
+    Properties:
+      Description: "This rule is to create Incident Request whenever there is EC2 Instance Retirement event is scheduled."
+      EventPattern:
+        source:
+          - "aws.health"
+        detail-type:
+          - "AWS Health Event"
+        detail:
+          service:
+            - "EC2"
+        eventTypeCategory:
+          - "scheduledChange"
+        eventTypeCode:
+          - "AWS_EC2_DEDICATED_HOST_RETIREMENT_SCHEDULED"
+          - "AWS_EC2_INSTANCE_RETIREMENT_SCHEDULED"
+          - "AWS_EC2_PERSISTENT_INSTANCE_RETIREMENT_SCHEDULED"
+      Name: "EC2RetirementNotification"
+      State: "ENABLED"
+      Targets:
+        -
+          Arn:
+            Ref: "EC2RetireSNSTopic"
+          Id: "EC2-Retire"
